@@ -1,0 +1,10 @@
+session_id,week_start,segment,event_type
+s1,2026-11-02,mobile,checkout_started
+s1,2026-11-02,mobile,purchase
+s1,2026-11-02,mobile,purchase
+s2,2026-11-02,mobile,checkout_started
+s3,2026-11-09,mobile,checkout_started
+s4,2026-11-09,mobile,checkout_started
+s5,2026-11-09,desktop,checkout_started
+s5,2026-11-09,desktop,purchase
+s6,2026-11-09,desktop,purchase

@@ -1,0 +1,4 @@
+*.duckdb
+target/
+logs/
+.user.yml

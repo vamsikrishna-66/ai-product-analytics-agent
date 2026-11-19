@@ -1,0 +1,7 @@
+name: product_analytics
+version: '1.0.0'
+config-version: 2
+profile: product_analytics
+models:
+  product_analytics:
+    +materialized: table

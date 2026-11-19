@@ -1,0 +1,7 @@
+product_analytics:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: analytics.duckdb
+      threads: 1
