@@ -3,7 +3,8 @@ from datetime import date
 from typing import Annotated
 
 import duckdb
-from fastapi import FastAPI, HTTPException
+import httpx
+from fastapi import FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 app = FastAPI()
@@ -53,3 +54,61 @@ def checkout_conversion(query: MetricQuery):
         "rows": [dict(zip(columns, row)) for row in rows[:query.limit]],
         "truncated": len(rows) > query.limit,
     }
+
+
+@app.get("/evidence/checkout-conversion", name="checkout_evidence")
+def checkout_evidence(query: Annotated[MetricQuery, Query()]):
+    return checkout_conversion(query)
+
+
+class AnalyzeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    question: str = Field(min_length=1, max_length=2000)
+
+
+@app.post("/analyze")
+def analyze(body: AnalyzeRequest, request: Request):
+    origin = os.getenv("LLM_CHAT_URL")
+    model = os.getenv("LLM_MODEL")
+    if not origin or not model:
+        raise HTTPException(503, "Analytics model is not configured")
+    headers = {}
+    if key := os.getenv("LLM_API_KEY"):
+        headers["Authorization"] = f"Bearer {key}"
+    try:
+        response = httpx.post(origin, headers=headers, timeout=20, json={
+            "model": model,
+            "messages": [
+                {"role": "system", "content": (
+                    "Select the checkout_conversion tool only for checkout conversion questions "
+                    "with an explicit date range you can map to Monday week starts. "
+                    "Ask for clarification if the metric or dates are unclear. "
+                    "Do not invent metrics, date ranges, or numeric results."
+                )},
+                {"role": "user", "content": body.question},
+            ],
+            "tools": [{"type": "function", "function": {
+                "name": "checkout_conversion",
+                "description": "Read checkout conversion by Monday week start and optional exact segment.",
+                "parameters": MetricQuery.model_json_schema(),
+            }}],
+            "parallel_tool_calls": False,
+        })
+        response.raise_for_status()
+        message = response.json()["choices"][0]["message"]
+        calls = message.get("tool_calls") or []
+        if not calls:
+            return {
+                "status": "needs_clarification",
+                "message": "Specify checkout conversion and the Monday week starts you want to compare.",
+            }
+        if len(calls) != 1 or calls[0]["function"]["name"] != "checkout_conversion":
+            raise ValueError("Unexpected tool selection")
+        query = MetricQuery.model_validate_json(calls[0]["function"]["arguments"])
+    except (httpx.HTTPError, ValueError, IndexError, KeyError, TypeError, AttributeError) as error:
+        raise HTTPException(502, "Analytics model did not return a usable tool response") from error
+
+    evidence = checkout_conversion(query)
+    params = query.model_dump(mode="json", exclude_none=True)
+    url = request.url_for("checkout_evidence").include_query_params(**params)
+    return {"status": "answered", "evidence_url": str(url), **evidence}

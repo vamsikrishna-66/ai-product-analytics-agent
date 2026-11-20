@@ -2,6 +2,10 @@ services:
   metrics:
     build: .
   api:
+    environment:
+      LLM_CHAT_URL: ${LLM_CHAT_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
     build: .
     command: [sh, -ec, "dbt build --profiles-dir . && exec uvicorn app:app --host 0.0.0.0 --port 8000"]
     ports:

@@ -17,3 +17,7 @@ curl http://localhost:8000/tools/checkout-conversion \
 ```
 
 The tool accepts an inclusive range of Monday week starts, an optional exact segment, and a row limit between 1 and 500. It executes a fixed parameterized query against a read-only DuckDB connection and returns rows at week and segment grain. A true `truncated` flag indicates the result exceeded the requested limit.
+
+Set `LLM_CHAT_URL` to an OpenAI-compatible chat completions endpoint reachable from the API, and set `LLM_MODEL` to a tool-capable model. Set `LLM_API_KEY` if the endpoint requires authentication. Send questions about the synthetic data to `POST /analyze` with a JSON body such as `{"question":"What was checkout conversion for the weeks starting November 2 and November 9, 2026?"}`.
+
+The API validates the model's tool arguments against the approved checkout conversion query. It returns the DuckDB rows and a link that reruns the same filters against the current metric data. If the model selects no tool, the API asks for clarification.
