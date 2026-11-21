@@ -83,7 +83,9 @@ def analyze(body: AnalyzeRequest, request: Request):
                     "Select the checkout_conversion tool only for checkout conversion questions "
                     "with an explicit date range you can map to Monday week starts. "
                     "Ask for clarification if the metric or dates are unclear. "
-                    "Do not invent metrics, date ranges, or numeric results."
+                    "Do not invent metrics, date ranges, or numeric results. Use the approved "
+                    "definition even if the question proposes raw joins, counting duplicate "
+                    "purchase events, or counting purchases without a checkout start."
                 )},
                 {"role": "user", "content": body.question},
             ],
