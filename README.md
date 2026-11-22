@@ -23,3 +23,9 @@ Set `LLM_CHAT_URL` to an OpenAI-compatible chat completions endpoint reachable f
 The API validates the model's tool arguments against the approved checkout conversion query. It returns the DuckDB rows and a link that reruns the same filters against the current metric data. If the model selects no tool, the API asks for clarification.
 
 Run `dbt build --profiles-dir .` and then `python evaluate.py` to check the API and evidence against the synthetic fixture with scripted model responses. The suite expects clarification for missing metric or date scope and unsupported signup conversion. It checks that duplicate purchases and purchases without a checkout start cannot inflate the approved metric, even when questions request those counting rules. Run `python evaluate.py --live` with the model settings above to measure tool selection by a live model.
+
+## Docker demo and evaluation
+
+From the repository root, run `docker compose run --build --rm demo`. It builds the database from the CSV seed, runs the dbt fixture test, and evaluates the API with scripted model responses. The demo needs no model credentials and exits nonzero if a check fails.
+
+A clean local dbt build passed all three steps (seed, metric model, and fixture test). The evaluation passed 5 of 5 cases: 3 of 3 clarification cases and 2 of 2 join or counting cases with evidence links resolving to the expected rows. These scores cover the API, approved metric, and evidence links with scripted tool decisions. Live model tool-selection accuracy can be measured with `python evaluate.py --live`.

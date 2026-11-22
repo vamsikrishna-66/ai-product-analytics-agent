@@ -1,0 +1,8 @@
+.git
+__pycache__
+*.pyc
+*.duckdb
+*.duckdb.wal
+.user.yml
+logs
+target
